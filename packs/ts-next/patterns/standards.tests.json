@@ -1,0 +1,31 @@
+{
+  "_comment": "Held-out fixtures for the ts-next standards regexes. Each case: {file, line, expect: block|warn|clean, rule, client?}. `rule` = the rule the case targets (positive: must fire; clean: must NOT fire). Authored independently of the patterns so the eval is non-circular. Run: factory eval-patterns.",
+  "cases": [
+    { "file": "apps/api/src/x.ts", "line": "const v = data as any", "expect": "block", "rule": "ts/no-as-any" },
+    { "file": "apps/api/src/x.ts", "line": "const v = data as unknown", "expect": "clean", "rule": "ts/no-as-any" },
+    { "file": "apps/api/src/x.ts", "line": "// @ts-ignore", "expect": "block", "rule": "ts/no-suppress" },
+    { "file": "apps/api/src/x.ts", "line": "const r = db.$queryRawUnsafe(`SELECT ${id}`)", "expect": "block", "rule": "db/no-raw-unsafe" },
+    { "file": "apps/api/src/x.ts", "line": "const key = \"sk-ant-api03-ZZZ\"", "expect": "block", "rule": "sec/hardcoded-secret" },
+    { "file": "apps/api/src/x.ts", "line": "const password = \"hunter2-supersecret\"", "expect": "block", "rule": "sec/literal-credential" },
+    { "file": "apps/api/src/x.ts", "line": "function f(x: any) { return x }", "expect": "warn", "rule": "ts/avoid-any" },
+    { "file": "apps/api/src/x.ts", "line": "function f(x: string) { return x }", "expect": "clean", "rule": "ts/avoid-any" },
+    { "file": "apps/api/src/x.ts", "line": "try { run() } catch (e) {}", "expect": "warn", "rule": "err/empty-catch" },
+    { "file": "apps/api/src/x.ts", "line": "// TODO clean this up later", "expect": "warn", "rule": "todo/untracked" },
+    { "file": "apps/api/src/x.ts", "line": "// TODO(ENG-123) clean this up", "expect": "clean", "rule": "todo/untracked" },
+    { "file": "apps/api/src/x.ts", "line": "console.log('processing', id)", "expect": "warn", "rule": "obs/console-in-service" },
+    { "file": "apps/web/src/page.tsx", "line": "console.log('render')", "expect": "clean", "rule": "obs/console-in-service" },
+    { "file": "apps/api/src/x.ts", "line": "const prisma = new PrismaClient()", "expect": "warn", "rule": "perf/per-request-client" },
+    { "file": "apps/api/src/x.ts", "line": "const rows = await db.order.findMany()", "expect": "warn", "rule": "db/unbounded-findmany" },
+    { "file": "apps/api/src/x.ts", "line": "const rows = await db.order.findMany({ where: { orgId } })", "expect": "clean", "rule": "db/unbounded-findmany" },
+    { "file": "apps/api/src/x.ts", "line": "const user = c.req.valid('json')", "expect": "clean", "rule": "ts/no-as-any" },
+    { "file": "apps/web/src/page.tsx", "line": "items.map((it, index) => <li key={index}>{it}</li>)", "expect": "warn", "rule": "react/index-key" },
+    { "file": "apps/web/src/page.tsx", "line": "<img src={url} />", "expect": "warn", "rule": "next/raw-img" },
+    { "file": "apps/web/src/page.tsx", "line": "const s = process.env.SECRET_KEY", "expect": "block", "rule": "next/client-secret", "client": true },
+    { "file": "apps/web/src/page.tsx", "line": "const s = process.env.NEXT_PUBLIC_API_URL", "expect": "clean", "rule": "next/client-secret", "client": true },
+    { "file": "services/worker/src/workflows/sync.ts", "line": "const res = await fetch('http://x')", "expect": "block", "rule": "temporal/io-in-workflow" },
+    { "file": "services/worker/src/workflows/sync.ts", "line": "const t = Date.now()", "expect": "clean", "rule": "temporal/io-in-workflow" },
+    { "file": "packages/db/prisma/migrations/001/migration.sql", "line": "CREATE INDEX idx_a ON orders (a)", "expect": "block", "rule": "db/index-not-concurrent" },
+    { "file": "packages/db/prisma/migrations/001/migration.sql", "line": "CREATE INDEX CONCURRENTLY idx_a ON orders (a)", "expect": "clean", "rule": "db/index-not-concurrent" },
+    { "file": "packages/db/prisma/migrations/001/migration.sql", "line": "ALTER TABLE orders DROP COLUMN legacy", "expect": "warn", "rule": "db/destructive-migration" }
+  ]
+}

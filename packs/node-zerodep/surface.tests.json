@@ -1,0 +1,14 @@
+{
+  "_comment": "Per-pack surface fixtures. fleet-selftest runs each path through surface_for_pack(path,'node-zerodep') and asserts the expected surface SET (rules accumulate/union). Keeps the pack topology from rotting.",
+  "cases": {
+    "harvest/lib/ingest.mjs": ["lib"],
+    "harvest/lib/write-atoms.mjs": ["lib"],
+    "harvest/retrieve.mjs": ["retrieval", "lib"],
+    "harvest/hook.mjs": ["retrieval", "lib"],
+    "skill/power-word/search.mjs": ["retrieval", "lib"],
+    "harvest/power-book.workflow.mjs": ["workflow", "lib"],
+    "harvest/atoms/geb/idea-x.md": [],
+    "harvest/reading-list.jsonl": [],
+    "harvest/atoms/incerto/index.jsonl": []
+  }
+}

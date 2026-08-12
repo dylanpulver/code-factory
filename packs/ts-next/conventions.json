@@ -1,0 +1,9 @@
+{
+  "_comment": "ts-next pack conventions. Branch/commit types default to core (CORE_BRANCH_TYPES/CORE_COMMIT_TYPES in _factory.py) — declare a `branch`/`commit` block here only to override. This pack ships only stack-specific staged-block patterns. Repo-level routing (base_branches, issue_pattern) lives in factory.config.yaml.",
+  "staged_block": [
+    { "regex": "\\bas any\\b", "label": "as any (use unknown + narrowing)" },
+    { "regex": "\\$(query|execute)RawUnsafe\\b", "label": "$queryRawUnsafe (use parameterized SQL)" },
+    { "regex": "\\.only\\(", "label": ".only( (would skip the rest of the suite)" },
+    { "regex": "@ts-ignore\\b", "label": "@ts-ignore (use @ts-expect-error with a reason, or fix the type)" }
+  ]
+}

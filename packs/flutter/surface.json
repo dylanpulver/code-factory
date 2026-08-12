@@ -1,0 +1,19 @@
+{
+  "_comment": "flutter pack surface map. Path -> surface(s) for a Flutter/Dart/Firebase app. Tune to your repo's lib/ layout. match primitives: contains (substring of leading-slash path), endswith, regex.",
+  "ungoverned": [
+    "/(build|\\.dart_tool|\\.flutter-plugins|ios/Pods|android/\\.gradle|\\.fvm)/",
+    "\\.g\\.dart$",
+    "\\.freezed\\.dart$",
+    "\\.gr\\.dart$"
+  ],
+  "rules": [
+    { "contains": "/widgets/", "surfaces": ["ui"] },
+    { "contains": "/screens/", "surfaces": ["ui"] },
+    { "contains": "/pages/", "surfaces": ["ui"] },
+    { "contains": "/presentation/", "surfaces": ["ui"] },
+    { "contains": "/services/", "surfaces": ["service"] },
+    { "contains": "/repositories/", "surfaces": ["data", "service"] },
+    { "contains": "/data/", "surfaces": ["data", "service"] },
+    { "contains": "/functions/", "surfaces": ["functions", "service"] }
+  ]
+}

@@ -1,0 +1,12 @@
+# flutter check-matrix — the local checks /factory-check runs before the review loop.
+
+# install: how a fresh worktree gets working deps (for parallel drives — see docs/parallel-drives.md)
+install: flutter pub get
+
+commands:
+  - name: analyze
+    run: flutter analyze
+  - name: test
+    run: flutter test
+# test_one runs a single test file (for the V2 fail-before/pass-after prover). {file} is substituted.
+test_one: flutter test {file}

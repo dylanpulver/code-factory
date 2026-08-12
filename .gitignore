@@ -1,0 +1,11 @@
+# runtime ledger / state (gitignored — local, per-run)
+.factory/state/
+.claude/state/
+state/validation.json
+
+# python
+__pycache__/
+*.pyc
+
+# os
+.DS_Store

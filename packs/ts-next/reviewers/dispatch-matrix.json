@@ -1,0 +1,13 @@
+{
+  "_comment": "Surface -> reviewers routing for the ts-next pack. Keyed off core _factory.surface(). Consumed by core/fleet/dispatch.py, the ship-it command, and fleet-selftest.py. Only reference reviewers that have a file in this dir (fleet-selftest enforces no orphans).",
+  "always": ["code-quality", "test-quality"],
+  "surfaces": {
+    "api": { "reviewers": ["security", "observability", "api-contract"], "qa": [] },
+    "service": { "reviewers": ["security", "observability", "data-access"], "qa": [] },
+    "temporal": { "reviewers": ["observability"], "qa": [] },
+    "frontend": { "reviewers": ["security"], "qa": [] },
+    "database": { "reviewers": ["data-access", "migration-safety"], "qa": [] },
+    "migration": { "reviewers": ["migration-safety"], "qa": [] },
+    "packages": { "reviewers": ["data-access"], "qa": [] }
+  }
+}

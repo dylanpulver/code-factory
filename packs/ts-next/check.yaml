@@ -1,0 +1,20 @@
+# ts-next check-matrix — the local checks /factory-check runs before the review loop.
+# Tune the commands to your repo's package manager / scripts. A command whose tool isn't
+# installed is skipped (and reported), never a hard failure.
+
+# install: how a fresh worktree gets working deps (for parallel drives — see docs/parallel-drives.md)
+install: pnpm install
+
+commands:
+  - name: typecheck
+    run: pnpm tsc --noEmit
+  - name: lint
+    run: pnpm lint
+  - name: test
+    run: pnpm test
+# test_one runs a single test file (for the V2 fail-before/pass-after prover). {file} is substituted.
+test_one: pnpm vitest run {file}
+
+# exercise (optional, V3): smoke the real path; its output is captured into the PR evidence.
+# e.g. boot + curl an endpoint, or run a script. Leave unset if there's nothing cheap to exercise.
+# exercise: pnpm tsx scripts/smoke.ts

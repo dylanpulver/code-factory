@@ -1,0 +1,10 @@
+{
+  "_comment": "Surface -> reviewers routing for the flutter pack. Only reference reviewers that have a file in this dir (fleet-selftest enforces no orphans).",
+  "always": ["code-quality", "test-quality"],
+  "surfaces": {
+    "ui": { "reviewers": [], "qa": [] },
+    "service": { "reviewers": ["security"], "qa": [] },
+    "data": { "reviewers": ["security"], "qa": [] },
+    "functions": { "reviewers": ["security"], "qa": [] }
+  }
+}

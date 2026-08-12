@@ -1,0 +1,22 @@
+{
+  "_comment": "Per-pack surface fixtures for ts-next. fleet-selftest runs each path through surface_for_pack(path, 'ts-next').",
+  "cases": {
+    "apps/api/src/routes/x.ts": ["api", "service"],
+    "apps/web/src/page.tsx": ["frontend"],
+    "src/app/api/auth/session/route.ts": ["api", "service"],
+    "src/app/api/webhooks/stripe/route.ts": ["api", "service"],
+    "src/components/Button.tsx": ["frontend"],
+    "src/app/dashboard/page.tsx": ["frontend"],
+    "src/middleware.ts": ["api", "service"],
+    "packages/db/prisma/schema.prisma": ["database", "packages"],
+    "services/worker/src/workflows/sync.ts": ["temporal", "service"],
+    "src/app/coverage/page.tsx": ["frontend"],
+    "src/app/build/page.tsx": ["frontend"],
+    "node_modules/x/y.ts": [],
+    "apps/web/.next/build/x.js": [],
+    "apps/api/dist/handler.js": [],
+    "packages/db/build/index.js": [],
+    "coverage/lcov-report/index.html": [],
+    "dist/bundle.js": []
+  }
+}

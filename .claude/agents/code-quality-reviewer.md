@@ -1,0 +1,1 @@
+../../packs/ts-next/reviewers/code-quality-reviewer.md

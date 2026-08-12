@@ -1,0 +1,7 @@
+{
+  "_comment": "node-zerodep pack conventions. Branch/commit types default to core (declare a branch/commit block only to override). staged_block = JS patterns the commit gate rejects. Universal safety (secrets, dup files) lives in core. The zero-dep guard is an edit-gate standard (patterns/standards.json), not here.",
+  "staged_block": [
+    { "regex": "\\beval\\(", "label": "eval( (arbitrary code execution — never commit)" },
+    { "regex": "\\bdebugger\\b", "label": "debugger (leftover breakpoint)" }
+  ]
+}

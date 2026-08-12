@@ -1,0 +1,16 @@
+{
+  "_comment": "Held-out fixtures for the flutter standards regexes. {file, line, expect: block|warn|clean, rule}. Authored independently of the patterns. Run: factory eval-patterns.",
+  "cases": [
+    { "file": "lib/services/auth.dart", "line": "const key = \"sk-ant-api03-ZZZ\"", "expect": "block", "rule": "sec/hardcoded-secret" },
+    { "file": "lib/services/auth.dart", "line": "final u = user as dynamic", "expect": "warn", "rule": "dart/avoid-dynamic-cast" },
+    { "file": "lib/services/auth.dart", "line": "try { run(); } catch (e) {}", "expect": "warn", "rule": "err/empty-catch" },
+    { "file": "lib/services/auth.dart", "line": "// TODO refactor this", "expect": "warn", "rule": "todo/untracked" },
+    { "file": "lib/services/auth.dart", "line": "// TODO(ENG-9) refactor this", "expect": "clean", "rule": "todo/untracked" },
+    { "file": "lib/services/auth.dart", "line": "print('logging in')", "expect": "warn", "rule": "obs/print-in-service" },
+    { "file": "lib/services/auth.dart", "line": "final r = await http.get(url)", "expect": "warn", "rule": "net/no-timeout" },
+    { "file": "lib/widgets/button.dart", "line": "color: Color(0xFF112233)", "expect": "warn", "rule": "ui/hardcoded-color" },
+    { "file": "lib/widgets/button.dart", "line": "print('debug build');", "expect": "warn", "rule": "ui/print-in-widget" },
+    { "file": "lib/widgets/button.dart", "line": "color: Theme.of(context).colorScheme.primary", "expect": "clean", "rule": "ui/hardcoded-color" },
+    { "file": "lib/widgets/button.dart", "line": "final user = ref.watch(userProvider)", "expect": "clean", "rule": "ui/print-in-widget" }
+  ]
+}

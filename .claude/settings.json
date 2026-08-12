@@ -1,0 +1,33 @@
+{
+  "$comment": "code-factory dogfoods its own Block layer. These PreToolUse:Bash hooks run when working IN this repo. All are fail-safe (any error exits 0) and honor FACTORY_OFF / FACTORY_WARN_ONLY.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/core/hooks/dangerous-cmd.py\"" },
+          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/core/hooks/check-branch-name.py\"" },
+          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/core/hooks/check-commit-msg.py\"" },
+          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/core/hooks/check-push.py\"" },
+          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/core/hooks/check-merge.py\"" },
+          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/core/hooks/check-pr-create.py\"" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write|NotebookEdit",
+        "hooks": [
+          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/core/hooks/standards-check.py\"" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/core/hooks/stop-completeness.py\"" }
+        ]
+      }
+    ]
+  }
+}

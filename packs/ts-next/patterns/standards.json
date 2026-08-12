@@ -1,0 +1,36 @@
+{
+  "_comment": "ts-next standards patterns for the real-time edit gate (standards-check). Each rule: [regex, BLOCK|WARN, id, fix], applied to ADDED lines only. BLOCK = near-zero false positive; WARN = advisory. Core adds language-agnostic security rules (secrets/credentials) on top. Inline (?i) for case-insensitive.",
+  "file_globs": ["\\.(ts|tsx)$", "\\.sql$"],
+  "client_marker": "^\\s*['\"]use client['\"]",
+  "test_escape": "as any|@ts-expect-error",
+  "universal": [
+    ["\\bas any\\b", "BLOCK", "ts/no-as-any", "use `unknown` + narrowing"],
+    ["@ts-(ignore|nocheck)\\b", "BLOCK", "ts/no-suppress", "use `@ts-expect-error` + reason (tests only)"],
+    ["\\$(query|execute)RawUnsafe\\b", "BLOCK", "db/no-raw-unsafe", "use parameterized tagged `$queryRaw`/`Prisma.sql`"],
+    [":\\s*any(\\b|\\[|>|;|,|\\))", "WARN", "ts/avoid-any", "annotate a real type or `unknown`"],
+    ["catch\\s*\\([^)]*\\)\\s*\\{\\s*\\}", "WARN", "err/empty-catch", "handle or rethrow; never swallow"],
+    ["//\\s*TODO(?!.*[A-Z]{2,}-\\d)", "WARN", "todo/untracked", "link a tracked ticket: // TODO(ENG-123)"]
+  ],
+  "surface": {
+    "temporal": [
+      ["\\b(fetch\\(|axios|process\\.env|require\\(['\"](fs|net|http|https|child_process))", "BLOCK", "temporal/io-in-workflow", "IO/env belongs in activities, not workflow code (Date/Math.random/timers are deterministic in the TS SDK)"]
+    ],
+    "frontend": [
+      ["key=\\{\\s*(i|idx|index)\\s*\\}", "WARN", "react/index-key", "use a stable content-derived key"],
+      ["\\bforwardRef\\(", "WARN", "react/forwardref", "React 19: use ref-as-prop"],
+      ["<img\\s", "WARN", "next/raw-img", "use next/image with alt + dimensions"]
+    ],
+    "api": [
+      ["new PrismaClient\\(", "WARN", "perf/per-request-client", "use a module-scoped singleton (serverless reuse)"]
+    ],
+    "service": [
+      ["\\.findMany\\(\\s*\\)", "WARN", "db/unbounded-findmany", "always pass take/cursor; cap the result set"]
+    ],
+    "migration": [
+      ["(?i)^\\s*CREATE\\s+INDEX\\s+(?!CONCURRENTLY)", "BLOCK", "db/index-not-concurrent", "CREATE INDEX CONCURRENTLY in a standalone migration"],
+      ["(?i)\\b(DROP\\s+(COLUMN|TABLE)|RENAME\\s+(TO|COLUMN))\\b", "WARN", "db/destructive-migration", "use expand/contract (parallel change)"]
+    ]
+  },
+  "service_console": ["\\bconsole\\.(log|error|warn|info)\\(", "WARN", "obs/console-in-service", "use a structured logger + error reporting"],
+  "client_secret": ["process\\.env\\.(?!NEXT_PUBLIC_)", "next/client-secret", "only NEXT_PUBLIC_* may reach the client; read secrets server-side"]
+}

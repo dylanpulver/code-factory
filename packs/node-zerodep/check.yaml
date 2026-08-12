@@ -1,0 +1,18 @@
+# node-zerodep check-matrix — local checks /factory-check runs before the review loop.
+# For zero-dependency Node ESM (.mjs) repos (e.g. a zero-dependency Node.js corpus repo): no install, no bundler, no eslint.
+
+# install: nothing to install — the whole point of this pack is zero deps.
+install: "true"
+
+commands:
+  # typecheck-equivalent: parse every .mjs EXCEPT Workflow scripts (marked by `export const meta`),
+  # whose top-level `return` is valid in the Workflow runtime but not under `node --check`.
+  - name: syntax
+    run: "for f in $(find . -name '*.mjs' ! -path '*/node_modules/*'); do grep -q 'export const meta' \"$f\" || node --check \"$f\" || exit 1; done; echo 'all non-workflow .mjs parse clean'"
+  # smoke: exercise the core retrieval path so a structural break is caught.
+  - name: smoke
+    run: "node harvest/retrieve.mjs 'resilience under deep uncertainty' 1 >/dev/null"
+
+# test_one runs a single file (V2 fail-before/pass-after prover). {file} is substituted.
+# Zero-dep repo has no per-file test runner; parse-check the file as the minimal prover.
+test_one: "node --check {file}"

@@ -1,0 +1,7 @@
+{
+  "_comment": "flutter pack conventions. Branch/commit types default to core (declare a branch/commit block only to override). staged_block = Dart-specific patterns the commit gate rejects. Universal safety (secrets, dup files) lives in core.",
+  "staged_block": [
+    { "regex": "\\bprint\\(", "label": "print( (use a logger, not print, in committed code)" },
+    { "regex": "// ignore: ", "label": "// ignore: (suppressing an analyzer rule — fix it or justify in PR)" }
+  ]
+}

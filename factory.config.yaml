@@ -1,0 +1,30 @@
+# code-factory configuration — the seam between core (engine) and pack (stack content).
+# Core reads this from repo root. Missing keys degrade gracefully (no-op/warn, never crash).
+
+# Active stack pack(s). Core loads surface map, patterns, reviewers, checks from here.
+packs:
+  - ts-next
+
+# Tracker / deploy adapters — NOT YET WIRED. No code reads these; they're placeholders for a
+# planned adapter layer. Setting them has no effect today.
+tracker: none
+deploy: manual
+
+# Base branches — change only via PR (push/merge gates protect these).
+base_branches:
+  - main
+  - staging
+
+# Issue-link gate — regex an issue id must match in a PR body, or empty to disable.
+# Default off (most repos don't require a tracker link). e.g. "(ENG|PROD)-[0-9]+"
+issue_pattern: ""
+
+# Verify gate — when true, the Stop gate blocks turn-end on a governed-code change until
+# `factory verify` stamps the ledger (fresh). On by default (enforced, not honor-system).
+# Waive per-change: stamp-ledger.py verify waived "reason". Disable: set to false.
+require_verify: true
+
+# Branch/commit FORMAT (types, require_scope) + stack staged-block patterns live in the
+# pack: packs/<pack>/conventions.json. Repo-level routing lives here.
+
+# Kill-switch defaults (env overrides win): FACTORY_OFF, FACTORY_WARN_ONLY

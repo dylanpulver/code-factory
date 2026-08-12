@@ -1,0 +1,19 @@
+{
+  "_comment": "node-zerodep surface map. Path -> surface(s) for a zero-dep Node ESM repo (a zero-dependency Node.js corpus repo layout). match primitives: contains (substring of leading-slash path), endswith, regex. Data (atoms, jsonl, md) and node_modules are ungoverned.",
+  "ungoverned": [
+    "/node_modules/",
+    "/atoms/",
+    "\\.jsonl$",
+    "\\.md$",
+    "\\.json$"
+  ],
+  "rules": [
+    { "regex": "\\.workflow\\.mjs$", "surfaces": ["workflow"] },
+    { "contains": "/lib/", "surfaces": ["lib"] },
+    { "contains": "/hook.mjs", "surfaces": ["retrieval"] },
+    { "contains": "/retrieve.mjs", "surfaces": ["retrieval"] },
+    { "contains": "/search.mjs", "surfaces": ["retrieval"] },
+    { "contains": "/consider.mjs", "surfaces": ["retrieval"] },
+    { "endswith": ".mjs", "surfaces": ["lib"] }
+  ]
+}

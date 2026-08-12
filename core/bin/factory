@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+# code-factory CLI — the stable interface the slash-commands and you call from any repo.
+# Resolves its own install location (FACTORY_HOME) so one global install serves every repo.
+set -euo pipefail
+
+# realpath of this script (resolves the PATH symlink), then ../.. = FACTORY_HOME
+SELF="$(python3 -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "${BASH_SOURCE[0]}")"
+FACTORY_HOME="$(cd "$(dirname "$SELF")/../.." && pwd)"
+export FACTORY_HOME
+
+cmd="${1:-help}"; shift || true
+
+case "$cmd" in
+  home)
+    echo "$FACTORY_HOME" ;;
+
+  selftest)
+    bash "$FACTORY_HOME/core/selftest.sh" ;;
+
+  dispatch)
+    # classify the CURRENT repo's diff (run from the repo you're working in)
+    python3 "$FACTORY_HOME/core/fleet/dispatch.py" "$@" ;;
+
+  eval-patterns)
+    # Tier-1 eval: run each pack's held-out pattern fixtures through the standards gate
+    python3 "$FACTORY_HOME/core/fleet/eval-patterns.py" "$@" ;;
+
+  eval-reviewers)
+    # regression ratchet: validate the real-catch set + coverage (deterministic guard)
+    python3 "$FACTORY_HOME/core/fleet/eval-reviewers.py" "$@" ;;
+
+  verify)
+    # prove the output works: V0 lint + V1 tests + V2 fail-before/pass-after (--test <path>)
+    python3 "$FACTORY_HOME/core/fleet/verify.py" "$@" ;;
+
+  profile)
+    # what the factory knows about THIS repo: init (sniff) | show | add <section> <line>
+    python3 "$FACTORY_HOME/core/fleet/profile.py" "$@" ;;
+
+  new-reviewer)
+    # scaffold a verified reviewer into a pack: factory new-reviewer <pack> <name>
+    PACK="${1:-}"; NAME="${2:-}"
+    [ -n "$PACK" ] && [ -n "$NAME" ] || { echo "usage: factory new-reviewer <pack> <name>" >&2; exit 2; }
+    RDIR="$FACTORY_HOME/packs/$PACK/reviewers"
+    [ -d "$RDIR" ] || { echo "unknown pack '$PACK'" >&2; exit 2; }
+    F="$RDIR/$NAME-reviewer.md"
+    [ -e "$F" ] && { echo "$F already exists" >&2; exit 2; }
+    cat > "$F" <<MD
+---
+name: $NAME-reviewer
+description: TODO one-line trigger surface. Opus.
+tools: Read, Grep, Glob, Bash
+model: opus
+---
+
+You are the $NAME reviewer. Read surrounding code before asserting.
+
+## P1
+- TODO the must-block conditions.
+
+## P2
+- TODO the should-fix conditions.
+
+## Do NOT flag
+- TODO out-of-scope.
+
+## Output
+P1/P2/P3 with \`file:line\` + copy-paste fix, grouped by file.
+
+## Golden fixtures
+
+### Bad (must flag)
+
+\`\`\`ts
+// TODO a snippet this reviewer MUST flag
+\`\`\`
+
+### Good (must pass)
+
+\`\`\`ts
+// TODO the corrected snippet it must NOT flag
+\`\`\`
+MD
+    echo "scaffolded $F"
+    echo "next: fill the TODOs, wire it into $RDIR/dispatch-matrix.json,"
+    echo "      add a born-with case to $RDIR/regression.json, then: factory selftest" ;;
+
+  packs)
+    ls -1 "$FACTORY_HOME/packs" ;;
+
+  pack)
+    # the active pack for the CURRENT repo (from its config, else auto-detected)
+    python3 -c "import sys; sys.path.insert(0, '$FACTORY_HOME/core'); import _factory as fx; print((fx.active_packs() or [''])[0])" ;;
+
+  init)
+    # opt this repo into the gates: drop a config + hook wiring pointing at the global engine
+    PACK="${1:-}"
+    if [ -z "$PACK" ]; then
+      if [ -f "pubspec.yaml" ]; then PACK="flutter"
+      elif [ -f "package.json" ]; then PACK="ts-next"
+      else PACK="ts-next"; fi
+      echo "auto-detected pack: $PACK (override: factory init <pack>)"
+    fi
+    [ -d "$FACTORY_HOME/packs/$PACK" ] || { echo "unknown pack '$PACK' (have: $(ls -m "$FACTORY_HOME/packs"))" >&2; exit 2; }
+
+    if [ -f "factory.config.yaml" ]; then
+      echo "factory.config.yaml already exists — leaving it"
+    else
+      cat > factory.config.yaml <<YAML
+# code-factory config. The engine lives globally; this just selects the pack + policy.
+packs:
+  - $PACK
+base_branches:
+  - main
+issue_pattern: ""
+# Enforce verification: block turn-end on a governed-code change until \`factory verify\` stamps
+# the ledger. This is what makes "what ships is verified" real rather than honor-system.
+# Waive per-change: stamp-ledger.py verify waived "reason". Disable entirely: set to false.
+require_verify: true
+YAML
+      echo "wrote factory.config.yaml (pack: $PACK)"
+    fi
+
+    mkdir -p .claude
+    if [ -f ".claude/settings.json" ]; then
+      echo "! .claude/settings.json exists — add the factory hooks yourself (see $FACTORY_HOME/.claude/settings.json); wrote .claude/settings.json.factory"
+      OUT=".claude/settings.json.factory"
+    else
+      OUT=".claude/settings.json"
+    fi
+    H="$FACTORY_HOME/core/hooks"
+    cat > "$OUT" <<JSON
+{
+  "\$comment": "code-factory gates for this repo. Engine lives at $FACTORY_HOME (global install).",
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Bash", "hooks": [
+        { "type": "command", "command": "python3 \"$H/dangerous-cmd.py\"" },
+        { "type": "command", "command": "python3 \"$H/check-branch-name.py\"" },
+        { "type": "command", "command": "python3 \"$H/check-commit-msg.py\"" },
+        { "type": "command", "command": "python3 \"$H/check-push.py\"" },
+        { "type": "command", "command": "python3 \"$H/check-merge.py\"" },
+        { "type": "command", "command": "python3 \"$H/check-pr-create.py\"" }
+      ]}
+    ],
+    "PostToolUse": [
+      { "matcher": "Edit|MultiEdit|Write|NotebookEdit", "hooks": [
+        { "type": "command", "command": "python3 \"$H/standards-check.py\"" }
+      ]}
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "python3 \"$H/stop-completeness.py\"" } ] }
+    ]
+  }
+}
+JSON
+    echo "wrote $OUT (hooks -> global engine)"
+    if [ -f ".gitignore" ] && ! grep -q "^.claude/state/" ".gitignore"; then
+      printf '\n# code-factory runtime ledger\n.claude/state/\n' >> .gitignore
+    fi
+    echo "Done. Gates are active in this repo. /ship-it and /factory-check are available."
+    ;;
+
+  help|*)
+    cat <<TXT
+code-factory CLI  (home: $FACTORY_HOME)
+  factory init [pack]   opt this repo into the gates (config + hook wiring -> global engine)
+  factory dispatch      classify this repo's diff -> reviewers/QA
+  factory check         run the factory selftest
+  factory packs         list available packs
+  factory home          print FACTORY_HOME
+TXT
+    ;;
+esac

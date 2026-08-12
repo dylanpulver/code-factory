@@ -1,0 +1,16 @@
+{
+  "_comment": "node-zerodep standards for the real-time edit gate. [regex, BLOCK|WARN, id, fix] on ADDED lines only. Core adds language-agnostic security (secrets) on top. Signature rule: the zero-dep guard (no external imports) — built into the gate structurally.",
+  "file_globs": ["\\.mjs$", "\\.js$"],
+  "test_escape": "// factory-allow",
+  "universal": [
+    ["import\\s+[^'\"]*from\\s+['\"](?!node:|\\.|#)", "BLOCK", "zerodep/no-external-import", "zero-dep repo: import only from node: builtins or relative paths (no npm packages)"],
+    ["require\\(\\s*['\"](?!node:|\\.)", "BLOCK", "zerodep/no-external-require", "zero-dep repo: require only node: builtins or relative paths (no npm packages)"],
+    ["catch\\s*\\([^)]*\\)\\s*\\{\\s*\\}", "WARN", "err/empty-catch", "handle or rethrow; don't silently swallow (a comment // ... is fine for best-effort)"],
+    ["//\\s*TODO(?!.*[A-Z]{2,}-\\d)", "WARN", "todo/untracked", "link a tracked ticket: // TODO(ENG-123)"]
+  ],
+  "surface": {
+    "lib": [],
+    "retrieval": [],
+    "workflow": []
+  }
+}

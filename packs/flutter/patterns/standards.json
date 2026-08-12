@@ -1,0 +1,21 @@
+{
+  "_comment": "flutter standards patterns for the real-time edit gate. [regex, BLOCK|WARN, id, fix] on ADDED lines only. Core adds language-agnostic security (secrets/credentials) on top. No client_secret/marker (not a server/client-split stack).",
+  "file_globs": ["\\.dart$"],
+  "test_escape": "// ignore:",
+  "universal": [
+    ["\\bas dynamic\\b", "WARN", "dart/avoid-dynamic-cast", "cast to a real type, not dynamic"],
+    ["//\\s*TODO(?!.*[A-Z]{2,}-\\d)", "WARN", "todo/untracked", "link a tracked ticket: // TODO(ENG-123)"],
+    ["catch\\s*\\([^)]*\\)\\s*\\{\\s*\\}", "WARN", "err/empty-catch", "handle or rethrow; never swallow"]
+  ],
+  "surface": {
+    "ui": [
+      ["Color\\(0x[0-9A-Fa-f]{8}\\)", "WARN", "ui/hardcoded-color", "use Theme/ColorScheme, not a hardcoded Color"],
+      ["\\bprint\\(", "WARN", "ui/print-in-widget", "use a logger, not print"]
+    ],
+    "service": [
+      ["\\bhttp\\.(get|post|put|delete)\\((?![^)]*timeout)", "WARN", "net/no-timeout", "set a request timeout on network calls"]
+    ],
+    "functions": []
+  },
+  "service_console": ["\\bprint\\(", "WARN", "obs/print-in-service", "use structured logging, not print"]
+}

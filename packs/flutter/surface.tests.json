@@ -1,0 +1,13 @@
+{
+  "_comment": "Per-pack surface fixtures. fleet-selftest runs each path through surface_for_pack(path, 'flutter') and asserts the expected surface set. Keeps the pack's topology from silently rotting.",
+  "cases": {
+    "lib/widgets/primary_button.dart": ["ui"],
+    "lib/screens/home_screen.dart": ["ui"],
+    "lib/services/auth_service.dart": ["service"],
+    "lib/data/user_repository.dart": ["data", "service"],
+    "functions/src/on_create.dart": ["functions", "service"],
+    "lib/models/user.g.dart": [],
+    "lib/models/order.freezed.dart": [],
+    "build/app/intermediates/x.dart": []
+  }
+}

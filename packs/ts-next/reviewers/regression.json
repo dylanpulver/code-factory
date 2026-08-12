@@ -1,0 +1,229 @@
+{
+  "_comment": "Real-catch regression set — the seeded-defect corpus the empirical loop scores. Each case: expect 'flag' (a planted bug the owning reviewer MUST catch) or 'clean' (the fixed version it must NOT flag). RIGOR RULES: (1) HELD-OUT — never a verbatim copy of a reviewer prompt's own example, and never tune a reviewer to pass a case by name (destroys the measurement). (2) flag cases carry `catch_signal` — concept keywords a genuine catch must reference, so the behavioral run scores 'flag' OBJECTIVELY (finding names the signal) instead of by vibes. (3) clean cases must be UNAMBIGUOUSLY clean for that reviewer's domain, or FP-rate is polluted. Structure checked by eval-reviewers.py --selftest; catch-rate/FP-rate by the on-demand behavioral run (k=3, majority, different-model judge — see /eval-reviewers). Grows from every genuine bug the fleet catches in the wild.",
+  "cases": [
+    {
+      "reviewer": "security",
+      "name": "session-checkRevoked-bug",
+      "source": "production Next.js auth route — real catch 2026",
+      "expect": "flag",
+      "must_flag": "verifyIdToken without checkRevoked=true mints a 5-day session from a revoked/disabled token",
+      "catch_signal": ["checkRevoked", "revoked", "revocation", "disabled token"],
+      "code": "await getAdminAuth().verifyIdToken(idToken);\nconst c = await getAdminAuth().createSessionCookie(idToken, { expiresIn: FIVE_DAYS });"
+    },
+    {
+      "reviewer": "security",
+      "name": "session-checkRevoked-fixed",
+      "source": "production Next.js auth route — fixed",
+      "expect": "clean",
+      "code": "await getAdminAuth().verifyIdToken(idToken, true);\nconst c = await getAdminAuth().createSessionCookie(idToken, { expiresIn: FIVE_DAYS });"
+    },
+    {
+      "reviewer": "security",
+      "name": "stripe-idempotency-bug",
+      "source": "production Stripe webhook route — real catch 2026",
+      "expect": "flag",
+      "must_flag": "webhook write uses .add() (auto-id), not idempotent on event.id — duplicate writes on Stripe at-least-once redelivery",
+      "catch_signal": ["idempoten", "event.id", "duplicate", "at-least-once", "redeliver"],
+      "code": "event = stripe.webhooks.constructEvent(body, sig, secret);\nawait db.collection('stripe_events').add({ type: event.type, paymentIntentId: pi.id });"
+    },
+    {
+      "reviewer": "security",
+      "name": "stripe-idempotency-fixed",
+      "source": "production Stripe webhook route — fixed (idempotency ENFORCED via a transactional check-and-set on event.id)",
+      "expect": "clean",
+      "code": "event = stripe.webhooks.constructEvent(body, sig, secret);\nconst ref = db.collection('stripe_events').doc(event.id);\nawait db.runTransaction(async (tx) => {\n  if ((await tx.get(ref)).exists) return;\n  tx.set(ref, { type: event.type, paymentIntentId: pi.id });\n});"
+    },
+    {
+      "reviewer": "security",
+      "name": "ssrf-user-controlled-fetch",
+      "source": "held-out — SSRF class (research-flagged gap)",
+      "expect": "flag",
+      "must_flag": "server-side fetch to a user-controlled URL (SSRF) — reaches internal services / cloud metadata; no host allowlist or scheme/IP guard",
+      "catch_signal": ["SSRF", "user-controlled", "allowlist", "internal", "metadata", "server-side request"],
+      "code": "app.post('/preview', async (c) => {\n  const { imageUrl } = await c.req.json();\n  const res = await fetch(imageUrl);\n  return c.json(await res.json());\n});"
+    },
+    {
+      "reviewer": "security",
+      "name": "ssrf-user-controlled-fetch-fixed",
+      "source": "held-out — fixed (host allowlist before fetch)",
+      "expect": "clean",
+      "code": "app.post('/preview', async (c) => {\n  const { imageUrl } = await c.req.json();\n  const host = new URL(imageUrl).host;\n  if (!ALLOWED_IMAGE_HOSTS.has(host)) return c.json({ error: { code: 'bad_host' } }, 400);\n  const res = await fetch(imageUrl);\n  return c.json(await res.json());\n});"
+    },
+    {
+      "reviewer": "security",
+      "name": "missing-authz-on-mutation",
+      "source": "held-out — broken access control / IDOR class",
+      "expect": "flag",
+      "must_flag": "mutating handler acts on :orgId with no check the caller is a member/admin of that org — any authenticated user can invite into any org (broken access control / IDOR)",
+      "catch_signal": ["authorization", "authz", "access control", "member", "admin", "owns", "IDOR", "tenant"],
+      "code": "app.post('/orgs/:orgId/invites', async (c) => {\n  const { orgId } = c.req.param();\n  const { email } = await c.req.json();\n  return c.json(await createInvite(orgId, email));\n});"
+    },
+    {
+      "reviewer": "security",
+      "name": "missing-authz-on-mutation-fixed",
+      "source": "held-out — fixed (caller must be org admin)",
+      "expect": "clean",
+      "code": "app.post('/orgs/:orgId/invites', async (c) => {\n  const { orgId } = c.req.param();\n  const caller = c.get('user');\n  if (!(await isOrgAdmin(caller.id, orgId))) return c.json({ error: { code: 'forbidden' } }, 403);\n  const { email } = await c.req.json();\n  return c.json(await createInvite(orgId, email));\n});"
+    },
+    {
+      "reviewer": "data-access",
+      "name": "webhook-double-credit-check-then-act",
+      "source": "production webhook handler — real catch 2026 (confirmed vs RPC source)",
+      "expect": "flag",
+      "must_flag": "check-then-insert dedup (no unique constraint) + fresh randomUUID() op id defeats the RPC's own idempotency guard -> concurrent/retried webhook double-credits money",
+      "catch_signal": ["unique constraint", "check-then", "idempoten", "operation id", "race", "concurrent"],
+      "code": "const { data: existing } = await admin.from('audit_logs').select('id').contains('new_values', { event_id: ev.id }).limit(1);\nif (existing?.length) return ok();\nawait admin.from('audit_logs').insert({ new_values: { event_id: ev.id } });\nawait admin.rpc('record_deposit', { p_operation_id: crypto.randomUUID(), p_user_id: uid, p_amount: amt });"
+    },
+    {
+      "reviewer": "data-access",
+      "name": "webhook-double-credit-fixed",
+      "source": "production webhook handler — fixed (stable operation id lets the RPC's own idempotency guard dedup a retried webhook)",
+      "expect": "clean",
+      "code": "await admin.rpc('record_deposit', { p_operation_id: `psp:${ev.id}`, p_user_id: uid, p_amount: amt });"
+    },
+    {
+      "reviewer": "data-access",
+      "name": "unbounded-read-to-client",
+      "source": "held-out — unbounded-read class",
+      "expect": "flag",
+      "must_flag": "unbounded findMany returned straight to the client — no take/pagination; a large account OOMs or times out the response",
+      "catch_signal": ["unbounded", "pagination", "take", "limit", "large", "memory", "timeout"],
+      "code": "app.get('/events', async (c) => {\n  const rows = await db.event.findMany({ where: { userId: c.get('user').id } });\n  return c.json(rows);\n});"
+    },
+    {
+      "reviewer": "data-access",
+      "name": "unbounded-read-to-client-fixed",
+      "source": "held-out — fixed (bounded + cursor pagination)",
+      "expect": "clean",
+      "code": "app.get('/events', async (c) => {\n  const rows = await db.event.findMany({ where: { userId: c.get('user').id }, take: 50, orderBy: { id: 'desc' }, cursor: c.req.query('cursor') ? { id: c.req.query('cursor') } : undefined });\n  return c.json(rows);\n});"
+    },
+    {
+      "reviewer": "data-access",
+      "name": "n-plus-one-promise-map",
+      "source": "held-out — N+1 via Promise.all+map (a DISTINCT shape from the reviewer prompt's for-loop example)",
+      "expect": "flag",
+      "must_flag": "one findUnique per id (N round-trips) even under Promise.all — still N+1; should be a single findMany({ where: { id: { in: ids } } })",
+      "catch_signal": ["N+1", "findMany", "in:", "batch", "per-id", "round-trip", "single query"],
+      "code": "const orders = await Promise.all(\n  body.orderIds.map((id) => db.order.findUnique({ where: { id }, include: { customer: true } }))\n);"
+    },
+    {
+      "reviewer": "data-access",
+      "name": "n-plus-one-promise-map-fixed",
+      "source": "held-out — fixed (single batched query)",
+      "expect": "clean",
+      "code": "const orders = await db.order.findMany({ where: { id: { in: body.orderIds } }, include: { customer: true } });"
+    },
+    {
+      "reviewer": "data-access",
+      "name": "non-atomic-balance-transfer",
+      "source": "held-out — missing-transaction class",
+      "expect": "flag",
+      "must_flag": "two-sided balance transfer as two separate writes — not atomic; a crash between them loses or invents money. needs db.$transaction",
+      "catch_signal": ["transaction", "atomic", "$transaction", "consistency", "partial", "rollback"],
+      "code": "await db.account.update({ where: { id: from }, data: { balance: { decrement: amt } } });\nawait db.account.update({ where: { id: to }, data: { balance: { increment: amt } } });"
+    },
+    {
+      "reviewer": "data-access",
+      "name": "non-atomic-balance-transfer-fixed",
+      "source": "held-out — fixed (single atomic transaction)",
+      "expect": "clean",
+      "code": "await db.$transaction([\n  db.account.update({ where: { id: from }, data: { balance: { decrement: amt } } }),\n  db.account.update({ where: { id: to }, data: { balance: { increment: amt } } }),\n]);"
+    },
+    {
+      "reviewer": "api-contract",
+      "name": "unvalidated-body-input",
+      "source": "held-out — unvalidated BODY (distinct from the prompt's query-param example)",
+      "expect": "flag",
+      "must_flag": "request body passed straight to createUser with no validating schema; response is untyped",
+      "catch_signal": ["validat", "schema", "zod", "untrusted", "untyped", "parse"],
+      "code": "app.post('/users', async (c) => {\n  const body = await c.req.json();\n  return c.json(await createUser(body));\n});"
+    },
+    {
+      "reviewer": "api-contract",
+      "name": "unvalidated-body-input-fixed",
+      "source": "held-out — fixed (schema-validated body + typed response)",
+      "expect": "clean",
+      "code": "const Body = z.object({ email: z.string().email(), name: z.string().min(1) });\napp.post('/users', async (c) => {\n  const body = Body.parse(await c.req.json());\n  return c.json({ user: await createUser(body) } satisfies CreateUserResponse);\n});"
+    },
+    {
+      "reviewer": "api-contract",
+      "name": "inconsistent-error-envelope",
+      "source": "held-out — error-contract class",
+      "expect": "flag",
+      "must_flag": "error body {message} diverges from the API's {error:{code,message}} envelope — clients can't parse errors uniformly",
+      "catch_signal": ["error envelope", "consistent", "contract", "shape", "error format"],
+      "code": "app.get('/orders/:id', async (c) => {\n  const o = await getOrder(c.req.param('id'));\n  if (!o) return c.json({ message: 'not found' }, 404);\n  return c.json(o);\n});"
+    },
+    {
+      "reviewer": "api-contract",
+      "name": "inconsistent-error-envelope-fixed",
+      "source": "held-out — fixed (consistent {error:{code,message}} envelope)",
+      "expect": "clean",
+      "code": "app.get('/orders/:id', async (c) => {\n  const o = await getOrder(c.req.param('id'));\n  if (!o) return c.json({ error: { code: 'not_found', message: 'order not found' } }, 404);\n  return c.json({ order: o });\n});"
+    },
+    {
+      "reviewer": "api-contract",
+      "name": "wrong-status-on-failure",
+      "source": "held-out — status-semantics class",
+      "expect": "flag",
+      "must_flag": "failed auth returns HTTP 200 with an error body (default status) instead of 401 — wrong status semantics; clients treat the failure as success",
+      "catch_signal": ["status", "200", "401", "4xx", "semantics", "default status"],
+      "code": "app.post('/login', async (c) => {\n  const u = await auth(await c.req.json());\n  if (!u) return c.json({ error: 'bad creds' });\n  return c.json({ token: sign(u) });\n});"
+    },
+    {
+      "reviewer": "api-contract",
+      "name": "wrong-status-on-failure-fixed",
+      "source": "held-out — fixed (401 with the standard envelope)",
+      "expect": "clean",
+      "code": "app.post('/login', async (c) => {\n  const u = await auth(await c.req.json());\n  if (!u) return c.json({ error: { code: 'invalid_credentials' } }, 401);\n  return c.json({ token: sign(u) });\n});"
+    },
+    {
+      "reviewer": "migration-safety",
+      "name": "drop-column-still-referenced",
+      "source": "held-out — expand/contract violation",
+      "expect": "flag",
+      "must_flag": "drops a column in the same release app code still reads (contract-before-expand) — breaks running instances mid-rollout; must stop reading it, deploy, then drop in a later release",
+      "catch_signal": ["expand", "contract", "still read", "drop", "rollout", "backward", "two release"],
+      "code": "ALTER TABLE users DROP COLUMN email;"
+    },
+    {
+      "reviewer": "migration-safety",
+      "name": "drop-column-still-referenced-fixed",
+      "source": "held-out — fixed (expand phase only; contract in a later release after code stops reading it)",
+      "expect": "clean",
+      "code": "ALTER TABLE users ADD COLUMN email_verified boolean;"
+    },
+    {
+      "reviewer": "migration-safety",
+      "name": "non-concurrent-index-live-table",
+      "source": "held-out — locking-index class",
+      "expect": "flag",
+      "must_flag": "CREATE INDEX without CONCURRENTLY takes an exclusive lock and blocks writes on a live table for the whole build",
+      "catch_signal": ["CONCURRENTLY", "lock", "block", "writes", "live table"],
+      "code": "CREATE INDEX idx_events_user ON events (user_id);"
+    },
+    {
+      "reviewer": "migration-safety",
+      "name": "non-concurrent-index-live-table-fixed",
+      "source": "held-out — fixed (CONCURRENTLY, no write lock)",
+      "expect": "clean",
+      "code": "CREATE INDEX CONCURRENTLY idx_events_user ON events (user_id);"
+    },
+    {
+      "reviewer": "migration-safety",
+      "name": "rename-column-one-step",
+      "source": "held-out — rename-breaks-rollout class",
+      "expect": "flag",
+      "must_flag": "renaming a column in one step breaks code still referencing the old name during rollout — needs add-new + backfill + dual-write + drop-old across releases",
+      "catch_signal": ["rename", "expand-contract", "dual-write", "backfill", "breaks", "two step", "rollout"],
+      "code": "ALTER TABLE users RENAME COLUMN name TO full_name;"
+    },
+    {
+      "reviewer": "migration-safety",
+      "name": "rename-column-one-step-fixed",
+      "source": "held-out — fixed (add-new + backfill; old column dropped in a later release)",
+      "expect": "clean",
+      "code": "ALTER TABLE users ADD COLUMN full_name text;\nUPDATE users SET full_name = name WHERE full_name IS NULL;"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "_comment": "Surface -> reviewers routing for the node-zerodep pack. Only reference reviewers that have a file in this dir (fleet-selftest enforces no orphans). Minimal pack: code-quality always; the zero-dep guard is an edit-gate standard, not a reviewer.",
+  "always": ["code-quality"],
+  "surfaces": {
+    "lib": { "reviewers": [], "qa": [] },
+    "retrieval": { "reviewers": [], "qa": [] },
+    "workflow": { "reviewers": [], "qa": [] }
+  }
+}

@@ -1,0 +1,1 @@
+../../core/commands/factory-check.md

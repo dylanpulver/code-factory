@@ -1,0 +1,15 @@
+{
+  "_comment": "Held-out fixtures for node-zerodep standards (+ core security). {file, line, expect: block|warn|clean, rule}. Authored independently of the patterns. Run: factory eval-patterns.",
+  "cases": [
+    { "file": "harvest/lib/x.mjs", "line": "import _ from 'lodash'", "expect": "block", "rule": "zerodep/no-external-import" },
+    { "file": "harvest/lib/x.mjs", "line": "import { readFileSync } from 'node:fs'", "expect": "clean", "rule": "zerodep/no-external-import" },
+    { "file": "harvest/lib/x.mjs", "line": "import { foo } from './bar.mjs'", "expect": "clean", "rule": "zerodep/no-external-import" },
+    { "file": "harvest/lib/x.mjs", "line": "const m = require('chalk')", "expect": "block", "rule": "zerodep/no-external-require" },
+    { "file": "harvest/lib/x.mjs", "line": "const fs = require('node:fs')", "expect": "clean", "rule": "zerodep/no-external-require" },
+    { "file": "harvest/lib/x.mjs", "line": "try { run() } catch (e) {}", "expect": "warn", "rule": "err/empty-catch" },
+    { "file": "harvest/lib/x.mjs", "line": "try { run() } catch { /* best-effort */ }", "expect": "clean", "rule": "err/empty-catch" },
+    { "file": "harvest/lib/x.mjs", "line": "// TODO clean this up", "expect": "warn", "rule": "todo/untracked" },
+    { "file": "harvest/lib/x.mjs", "line": "// TODO(ENG-9) clean this up", "expect": "clean", "rule": "todo/untracked" },
+    { "file": "harvest/lib/x.mjs", "line": "const key = \"sk-ant-api03-ZZZ\"", "expect": "block", "rule": "sec/hardcoded-secret" }
+  ]
+}

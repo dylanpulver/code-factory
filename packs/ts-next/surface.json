@@ -1,0 +1,23 @@
+{
+  "_comment": "ts-next pack surface map. Path -> surface(s). Consumed by core _factory.surface(). Generic TS/Next/Hono/Prisma topology — tune the rules to your repo's layout. match primitives: contains (substring of leading-slash path), endswith, regex.",
+  "_ungoverned_note": "node_modules/.next/.turbo/generated are ungoverned anywhere (never source). dist/build/out/coverage are anchored to a package root so a real route like app/build/page.tsx or app/coverage/page.tsx is still reviewed, not silently exempted.",
+  "ungoverned": [
+    "/(node_modules|\\.next|\\.turbo|generated)/",
+    "^/(?:apps/[^/]+/|packages/[^/]+/)?(?:dist|build|out|coverage)/"
+  ],
+  "rules": [
+    { "contains": "/apps/api/", "surfaces": ["api", "service"] },
+    { "contains": "/apps/server/", "surfaces": ["api", "service"] },
+    { "contains": "/apps/web/", "surfaces": ["frontend"] },
+    { "contains": "/apps/frontend/", "surfaces": ["frontend"] },
+    { "contains": "/app/api/", "surfaces": ["api", "service"] },
+    { "endswith": "/route.ts", "surfaces": ["api", "service"] },
+    { "endswith": "/middleware.ts", "surfaces": ["api", "service"] },
+    { "contains": "/components/", "surfaces": ["frontend"] },
+    { "regex": "/app/.*/(page|layout|template|loading|error|not-found)\\.(tsx|ts)$", "surfaces": ["frontend"] },
+    { "regex": "/workflows?/", "surfaces": ["temporal", "service"] },
+    { "endswith": ".prisma", "surfaces": ["database"] },
+    { "regex": "/migrations/.*\\.sql$", "surfaces": ["database", "migration"] },
+    { "contains": "/packages/", "surfaces": ["packages"] }
+  ]
+}

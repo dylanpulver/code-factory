@@ -1,5 +1,7 @@
 # code-factory
 
+[![CI](https://github.com/dylanpulver/code-factory/actions/workflows/ci.yml/badge.svg)](https://github.com/dylanpulver/code-factory/actions/workflows/ci.yml)
+
 A portable, language-agnostic **coding factory** for Claude Code. It drives a change end to end —
 and **builds, reviews, proves, and remembers**, so what ships is correct, not just plausible.
 

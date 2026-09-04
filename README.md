@@ -103,3 +103,7 @@ a fresh worktree, so collisions are impossible. See [`docs/parallel-drives.md`](
 Author `packs/<stack>/` (surface map, conventions, standards patterns, reviewers, `check.yaml`).
 No core change — `core/` never reads your source language. `factory new-reviewer` scaffolds a verified
 reviewer; `bash core/selftest.sh` must stay green.
+
+---
+
+Built by [Dylan Pulver](https://dylanpulver.com), software engineer and entrepreneur in Toronto.
